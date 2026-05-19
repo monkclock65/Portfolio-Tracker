@@ -1,0 +1,46 @@
+Table User {
+id uuid [PK]
+username varchar [unique, not null]
+email varchar [unique, not null]
+hashed_Passwd varchar [not null]
+created_at datetime [not null]
+}
+
+Table Portfolio {
+  id uuid [PK] 
+  account_type varchar [not null] // '401k' 'Roth' 'taxable'
+  user_id uuid [ref: > User.id,not null]
+  Name varchar [not null]
+  
+}
+
+Table Holding {
+  id uuid [PK]
+  portfolio_id uuid [ref: > Portfolio.id, not null]
+  Symbol varchar [not null]
+  shares decimal [not null]
+  avg_cost_basis decimal [not null]
+}
+
+Table Transaction {
+  id uuid [PK]
+  holding_id uuid [ref: > Holding.id, not null]
+  price decimal [not null]
+  shares decimal [not null]
+  type varchar [not null] // 'buy', 'sell'
+  transacted_at datetime [not null]
+  
+}
+
+
+Table PriceCache { 
+  Symbol varchar [PK]
+  price decimal [not null]
+  fetched_at datetime [not null] 
+}
+
+Table Watchlist {
+  id uuid [PK]
+  user_id uuid [ref: > User.id, not null]
+  Symbol varchar [ref: > PriceCache.Symbol, not null]
+}
