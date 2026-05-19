@@ -1,4 +1,4 @@
 # Portfolio-Tracker
 
 # Schema 
- ![Database Schema] (docs/schema.png)
+ ![Database Schema](docs/schema.png)
