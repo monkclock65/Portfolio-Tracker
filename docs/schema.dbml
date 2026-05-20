@@ -10,7 +10,7 @@ Table Portfolio {
   id uuid [PK] 
   account_type varchar [not null] // '401k' 'Roth' 'taxable'
   user_id uuid [ref: > User.id,not null]
-  Name varchar [not null]
+  name varchar [not null]
   
 }
 
