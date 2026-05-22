@@ -2,7 +2,7 @@ from app.extensions import db
 import uuid
 from sqlalchemy.dialects.postgresql import UUID
 import enum
-
+import datetime
 class TransactionType(enum.Enum):
     BUY = 'BUY'
     SELL = 'SELL'

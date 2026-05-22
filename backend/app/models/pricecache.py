@@ -1,5 +1,5 @@
-from extensions.app import db
-
+from app.extensions import db
+import datetime
 class PriceCache(db.Model):
     __tablename__ = 'price_cache'
     symbol = db.Column(db.String, nullable=False, primary_key=True)
