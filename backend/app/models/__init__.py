@@ -4,3 +4,4 @@ from app.models.transaction import Transaction
 from app.models.pricecache import PriceCache
 from app.models.watchlist import Watchlist
 from app.models.holding import Holding
+from app.models.token_blocklist import TokenBlocklist

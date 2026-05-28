@@ -2,7 +2,7 @@ from app.extensions import db
 import uuid
 from sqlalchemy.dialects.postgresql import UUID
 import enum
-import datetime
+from datetime import datetime, timezone
 class TransactionType(enum.Enum):
     BUY = 'BUY'
     SELL = 'SELL'
@@ -15,5 +15,5 @@ class Transaction(db.Model):
     transaction_type = db.Column(db.Enum(TransactionType), nullable=False)
     shares = db.Column(db.Numeric, nullable=False)
     price = db.Column(db.Numeric, nullable=False)
-    transacted_at = db.Column(db.DateTime, nullable=False)
+    transacted_at = db.Column(db.DateTime(timezone=True), nullable=False,default=lambda:datetime.now(timezone.utc))
 
