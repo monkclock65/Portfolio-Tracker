@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from app.extensions import db, bcrypt
 from email_validator import validate_email, EmailNotValidError
 from app.models.user import User
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, get_jwt_identity, create_refresh_token, jwt_required
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 @auth_bp.route('/register', methods=['POST'])
@@ -59,6 +59,19 @@ def login():
 
    if not user or not bcrypt.check_password_hash(user.hashed_passwd,password):
         return jsonify({'Error':'username or password is incorrect'}),401
-   token = create_access_token(identity=str(user.id))
-   return jsonify({'token':token}),200
-        
+   access_token = create_access_token(identity=str(user.id))
+   refresh_token = create_refresh_token(identity=str(user.id))
+   return jsonify({'access_token':access_token,'refresh_token':refresh_token}),200
+
+@auth_bp.route('/refresh', methods=['POST'])
+@jwt_required(refresh=True)
+def refresh():
+    identity=get_jwt_identity()
+    access_token=create_access_token(identity=identity)
+    return jsonify({'access_token':access_token}),200
+
+@auth_bp.route('/logout', methods=['DELETE'])
+@jwt_required()
+def logout():
+     
+   
