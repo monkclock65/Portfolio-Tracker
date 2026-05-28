@@ -2,7 +2,9 @@ from flask import Blueprint, request, jsonify
 from app.extensions import db, bcrypt
 from email_validator import validate_email, EmailNotValidError
 from app.models.user import User
-from flask_jwt_extended import create_access_token, get_jwt_identity, create_refresh_token, jwt_required
+from flask_jwt_extended import create_access_token, get_jwt_identity, create_refresh_token, jwt_required, get_jwt
+from app.models.token_blocklist import TokenBlocklist
+
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 @auth_bp.route('/register', methods=['POST'])
@@ -73,5 +75,7 @@ def refresh():
 @auth_bp.route('/logout', methods=['DELETE'])
 @jwt_required()
 def logout():
-     
-   
+     jti=get_jwt('jti')
+     db.session.add(TokenBlocklist(jti=jti))
+     db.session.commit()
+     return jsonify('jwt revoked'),200
