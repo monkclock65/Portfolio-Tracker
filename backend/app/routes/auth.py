@@ -34,7 +34,7 @@ def register():
         }), 400
     
     #check for valid email
-    try: validate_email(email)
+    try: validate_email(email,check_deliverability=False)
     except EmailNotValidError: return jsonify({
         'Error': 'Invalid email format'}), 400
     
@@ -75,7 +75,7 @@ def refresh():
 @auth_bp.route('/logout', methods=['DELETE'])
 @jwt_required()
 def logout():
-     jti=get_jwt('jti')
+     jti=get_jwt()['jti']
      db.session.add(TokenBlocklist(jti=jti))
      db.session.commit()
-     return jsonify('jwt revoked'),200
+     return jsonify({'message':'jwt revoked'}),200
