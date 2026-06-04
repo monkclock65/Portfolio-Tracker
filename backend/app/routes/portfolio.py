@@ -24,7 +24,7 @@ def insert():
     db.session.commit()
     return jsonify({'message':'portfolio added successfully'}),200
 
-@portfolio_bp.route('/<uuid:portfolio_id>',methods=['PATCH'])
+@portfolio_bp.route('portfolio/<uuid:portfolio_id>',methods=['PATCH'])
 @jwt_required()
 def update(portfolio_id):
     data = request.get_json()
