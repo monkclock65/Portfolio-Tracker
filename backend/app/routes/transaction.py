@@ -14,10 +14,9 @@ def get_owned_portfolio(portfolio_id):
     if not portfolio_row:
         return None
     return portfolio_row
-def get_avg_cost_basis(price,shares,portfolio_id,symbol):
+def get_avg_cost_basis(price,shares,portfolio_id,symbol,transaction_type):
     holding = db.session.query(Holding).filter_by(symbol=symbol,portfolio_id=portfolio_id).first()
     if holding:
-        holding_shares = holding.shares
         holding_id = holding.id
         transactions = db.session.query(Transaction).filter_by(holding_id=holding_id).all()
         total_amount = 0
@@ -32,18 +31,21 @@ def get_avg_cost_basis(price,shares,portfolio_id,symbol):
                 avg_cost = total_amount/shares_count
                 total_amount = total_amount - (shares_sold * avg_cost)
                 shares_count = shares_count - shares_sold
-
-        new_transaction_total = price * shares
-        holding_total = total_amount + new_transaction_total
-        total_holding_shares = holding_shares + shares
-        avg_cost_basis = holding_total/total_holding_shares
-        return avg_cost_basis
+        if transaction_type == TransactionType.BUY:
+            new_transaction_total = price * shares
+            holding_total = total_amount + new_transaction_total
+            total_holding_shares = shares_count + shares
+            avg_cost_basis = holding_total/total_holding_shares
+            return avg_cost_basis
+        if transaction_type == TransactionType.SELL:
+            avg_cost_basis = total_amount/shares_count
+            return avg_cost_basis
     else: 
         new_transaction_total = price * shares
         holding_total_shares = shares
         avg_cost_basis = new_transaction_total/holding_total_shares
         return avg_cost_basis
-    
+    #can't sell shares if holding doesn't exist so no need to check for transaction type
     
 
 
@@ -55,7 +57,11 @@ def insert(portfolio_id):
         return jsonify({'message': 'portfolio not found'}), 404
     data = request.get_json()
     symbol = data.get('symbol')
-    transaction_type = data.get('transaction_type')
+    raw_type = data.get('transaction_type')
+    try:
+        transaction_type = TransactionType(raw_type)
+    except ValueError:
+        return jsonify({'message': 'invalid transaction_type'}), 400
     shares = data.get('shares')
     price = data.get('price')
     price = Decimal(str(price))
@@ -64,15 +70,20 @@ def insert(portfolio_id):
     holding = db.session.query(Holding).filter_by(symbol=symbol,portfolio_id=portfolio_id).first()
     if holding:
         holding_id = holding.id
-        avg_cost_basis = get_avg_cost_basis(price,shares,portfolio_id,symbol)
+        avg_cost_basis = get_avg_cost_basis(price,shares,portfolio_id,symbol,transaction_type)
         transaction = Transaction(holding_id=holding_id,avg_cost_basis=avg_cost_basis,transaction_type=transaction_type,shares=shares,price=price)
         holding.avg_cost_basis = avg_cost_basis
-        holding.shares = holding.shares + shares
+        if transaction.transaction_type == TransactionType.BUY:
+            holding.shares = holding.shares + shares
+        if transaction.transaction_type == TransactionType.SELL:
+            holding.shares = holding.shares - shares
         db.session.add(transaction)
         db.session.commit()
     else:
-        avg_cost_basis = get_avg_cost_basis(price,shares,portfolio_id,symbol)
-        holding = Holding(symbol=symbol,shares=shares,avg_cost_basis=avg_cost_basis)
+        if transaction_type == TransactionType.SELL:
+            return jsonify({'message':'no holding with shares found'}),404
+        avg_cost_basis = get_avg_cost_basis(price,shares,portfolio_id,symbol,transaction_type)
+        holding = Holding(portfolio_id=portfolio_id,symbol=symbol,shares=shares,avg_cost_basis=avg_cost_basis)
         db.session.add(holding)
         db.session.commit()
         holding_id = holding.id
