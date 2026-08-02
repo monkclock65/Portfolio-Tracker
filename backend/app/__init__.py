@@ -4,6 +4,7 @@ from app.extensions import db, migrate, jwt, bcrypt, cors
 from app.models.token_blocklist import TokenBlocklist
 from app.routes.auth import auth_bp
 from app.routes.portfolio import portfolio_bp
+from app.routes.transaction import transaction_bp
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
@@ -14,6 +15,7 @@ def create_app(test_config=None):
         app.config.from_mapping(test_config)
     app.register_blueprint(auth_bp)
     app.register_blueprint(portfolio_bp)
+    app.register_blueprint(transaction_bp)
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)

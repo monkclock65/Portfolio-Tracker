@@ -1,6 +1,6 @@
 from app.models.transaction import Transaction,TransactionType
 from app.models.holding import Holding
-from app.models.portfolio import PORTFOLIO
+from app.models.portfolio import Portfolio
 from flask import Blueprint,request, jsonify
 from app.extensions import db
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -10,7 +10,7 @@ transaction_bp = Blueprint('transaction',__name__,url_prefix='/transaction')
 
 def get_owned_portfolio(portfolio_id):
     identity = get_jwt_identity()
-    portfolio_row = db.session.query(PORTFOLIO).filter_by(user_id=identity,id=portfolio_id).first()
+    portfolio_row = db.session.query(Portfolio).filter_by(user_id=identity,id=portfolio_id).first()
     if not portfolio_row:
         return None
     return portfolio_row
@@ -71,7 +71,7 @@ def insert(portfolio_id):
     if holding:
         holding_id = holding.id
         avg_cost_basis = get_avg_cost_basis(price,shares,portfolio_id,symbol,transaction_type)
-        transaction = Transaction(holding_id=holding_id,avg_cost_basis=avg_cost_basis,transaction_type=transaction_type,shares=shares,price=price)
+        transaction = Transaction(holding_id=holding_id,transaction_type=transaction_type,shares=shares,price=price)
         holding.avg_cost_basis = avg_cost_basis
         if transaction.transaction_type == TransactionType.BUY:
             holding.shares = holding.shares + shares
@@ -79,6 +79,7 @@ def insert(portfolio_id):
             holding.shares = holding.shares - shares
         db.session.add(transaction)
         db.session.commit()
+        return jsonify({'message':'transaction added','holding id': str(holding_id)}), 201
     else:
         if transaction_type == TransactionType.SELL:
             return jsonify({'message':'no holding with shares found'}),404
@@ -87,9 +88,10 @@ def insert(portfolio_id):
         db.session.add(holding)
         db.session.commit()
         holding_id = holding.id
-        transaction = Transaction(holding_id=holding_id,avg_cost_basis=avg_cost_basis,transaction_type=transaction_type,shares=shares,price=price)
+        transaction = Transaction(holding_id=holding_id,transaction_type=transaction_type,shares=shares,price=price)
         db.session.add(transaction)
         db.session.commit()
+        return jsonify({'message':'transaction added','holding id': str(holding_id)}), 201
     
     
        
