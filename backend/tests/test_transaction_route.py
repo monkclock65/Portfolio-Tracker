@@ -185,6 +185,7 @@ class TestTransactionGuards:
             json={'symbol': 'AAPL', 'transaction_type': 'BUY',
                   'shares': 5, 'price': 100},
         )  # no auth header
+        print("BODY:",resp.get_json())
         assert resp.status_code == 401
 
 
