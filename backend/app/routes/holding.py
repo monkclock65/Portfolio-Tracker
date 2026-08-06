@@ -3,7 +3,7 @@ from app.extensions import db
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.portfolio import Portfolio
-from app.pricing import finnhub_api
+from app.pricing import PriceService
 
 holding_bp = Blueprint('holding',__name__,url_prefix='/holding')
 
@@ -24,8 +24,8 @@ def insert():
     symbol = data.get('symbol')
     shares = data.get('shares')
     avg_cost_basis = data.get('avg_cost_basis')
-    if not symbol or not shares or not avg_cost_basis:
-        return jsonify({'message':'missing required fields'}), 400
+    if not symbol:
+        return jsonify({'message':'missing required symbol'}), 400
     holding = Holding(symbol=symbol,shares=shares,avg_cost_basis=avg_cost_basis,portfolio_id=portfolio_id)
     db.session.add(holding)
     db.session.commit()
@@ -43,9 +43,9 @@ def read(holding_id):
     portfolio = db.session.query(Portfolio).filter_by(user_id=identity,id=holding.portfolio_id).first()
     if not portfolio:
         return jsonify({'message':'holding not found'}), 404
-    price = finnhub_api.read_price(holding.symbol)
+    price = PriceService.read_price(holding.symbol)
     return jsonify({
-        'price' : price,
+        'price' : str(price),
         'symbol': holding.symbol,
         'shares': str(holding.shares),
         'avg_cost_basis': str(holding.avg_cost_basis),
@@ -64,19 +64,16 @@ def read_all(portfolio_id):
     if not holdings:
         return jsonify({'message':'no holdings found'}), 404
     result = []
-    total_value = 0
     for h in holdings:
-        price = finnhub_api.read_price(h.symbol)
-        total_value = price + total_value
+        price = PriceService.read_price(h.symbol)
         result.append({
-        'price' : price,
+        'price' : str(price),
         'symbol': h.symbol,
         'shares': str(h.shares),
         'avg_cost_basis': str(h.avg_cost_basis),
         'id': str(h.id),
         'portfolio_id': str(h.portfolio_id)
         })
-    result.append({'total_portfolio_value': total_value})
     return jsonify(result), 200
 
 #no delete in holding because will be in transaction
