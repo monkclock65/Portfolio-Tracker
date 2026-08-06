@@ -3,6 +3,7 @@ from flask import current_app,jsonify
 from app.extensions import db
 from app.models.pricecache import PriceCache
 from decimal import Decimal
+from datetime import datetime,timezone,timedelta
 
 class finnhub_api():
     _client = None
@@ -37,10 +38,21 @@ class finnhub_api():
         pricecache_update = db.session.query(PriceCache).filter_by(symbol=symbol).first()
         if pricecache_update:
             pricecache_update.price = current_price
-            db.session.commit
-            return jsonify({'message':'price updated'}), 201
+            pricecache_update.fetched_at=datetime.now(timezone.utc)
+            db.session.commit()
+            return pricecache_update.price
         else:
             pricecache = PriceCache(symbol=symbol,price=current_price)
             db.session.add(pricecache)
             db.session.commit()
-            return jsonify({'message':'price added'}), 201
+            return pricecache.price
+    
+    def read_price(symbol):
+        pricecache = db.session.query(PriceCache).filter_by(symbol=symbol).first()
+        if not pricecache:
+            return finnhub_api.add_price(symbol)
+        else:
+            is_current = datetime.now(timezone.utc) - pricecache.fetched_at < timedelta(minutes=15)
+            if not is_current:
+                return finnhub_api.add_price(symbol)
+        return pricecache.price
