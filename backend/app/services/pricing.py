@@ -14,7 +14,18 @@ class PriceService():
         return PriceService._client
 
     def get_price(symbol):
-        quote = PriceService.get_finnhub_client().quote(symbol)
+        try:
+            quote = PriceService.get_finnhub_client().quote(symbol)
+        except finnhub.FinnhubApiException as e:
+            if e.status_code == 429:
+                current_app.logger.warning(f'finnhub rate limit hit for {symbol}')
+            else:
+                current_app.logger.exception(f'finnhub API error for {symbol}')
+            raise
+        except Exception as e:
+            current_app.logger.exception(f'unexpected error fetching {symbol}')
+            raise
+
         if not quote or quote.get('c') in (None, 0): 
             return None
         return {
@@ -22,7 +33,6 @@ class PriceService():
             'high_price': quote.get('h'),
             'low_price': quote.get('l'),
             'previous_close': quote.get('pc')
-
         }
 # for watchlist ui
     def get_stock_list(exchange_code):
@@ -31,12 +41,10 @@ class PriceService():
 
     def add_price(symbol):
         price = PriceService.get_price(symbol)
-        if price == None:
-            return jsonify({'message':'symbol not found'})
+        if price is None:
+            return None
         current_price = price.get('current_price')
         current_price = Decimal(str(current_price))
-        if current_price is None:
-            return jsonify({'message':'api error or other issue returning no price. try again later'})
         pricecache_update = db.session.query(PriceCache).filter_by(symbol=symbol).first()
         if pricecache_update:
             pricecache_update.price = current_price
@@ -51,12 +59,20 @@ class PriceService():
     
     def read_price(symbol):
         pricecache = db.session.query(PriceCache).filter_by(symbol=symbol).first()
-        if not pricecache:
-            return PriceService.add_price(symbol)
-        else:
+        if pricecache:
             is_current = datetime.now(timezone.utc) - pricecache.fetched_at < timedelta(minutes=15)
-            if not is_current:
-                return PriceService.add_price(symbol)
+            if is_current:
+                return pricecache.price
+            else:
+                try:
+                     price = PriceService.add_price(symbol)
+                     if price is None:
+                         return pricecache.price
+                     return price
+                except Exception:
+                    return pricecache.price
+        else:
+            return None
 
-        return pricecache.price
+        
 
