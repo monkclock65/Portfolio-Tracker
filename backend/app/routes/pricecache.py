@@ -9,9 +9,9 @@ pricecache_bp = Blueprint('pricecache', __name__, url_prefix='/pricecache')
 @jwt_required()
 def read(symbol):
     price = PriceService.read_price(symbol)
-    if price == 0 or price == Decimal('0'):
+    if price is None:
         return jsonify({'message': 'price lookup failure. try again later'}), 400
-    return jsonify({'message': 'price read successfully', 'price': str(price)}), 200
+    return jsonify({'price': str(price)}), 200
 
     
     
