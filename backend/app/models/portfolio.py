@@ -2,7 +2,7 @@ from app.extensions import db
 import uuid
 from sqlalchemy.dialects.postgresql import UUID
 import enum
-from app.types import GUID
+from app.services.types import GUID
 
 class AccountType(enum.Enum):
     taxable = 'taxable'

@@ -3,7 +3,8 @@ from app.extensions import db
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.portfolio import Portfolio
-from app.pricing import PriceService
+from app.services.pricing import PriceService
+from app.services.portfolio import portfolio_service
 
 holding_bp = Blueprint('holding',__name__,url_prefix='/holding')
 
@@ -60,22 +61,8 @@ def read_all(portfolio_id):
     portfolio = db.session.query(Portfolio).filter_by(id=portfolio_id,user_id=identity).first()
     if not portfolio: 
         return jsonify({'message':'no holdings found'}), 404
-    holdings = db.session.query(Holding).filter_by(portfolio_id=portfolio_id).all()
-    if not holdings:
-        return jsonify({'message':'no holdings found'}), 404
-    result = []
-    for h in holdings:
-        price = PriceService.read_price(h.symbol)
-        result.append({
-        'price' : str(price),
-        'symbol': h.symbol,
-        'shares': str(h.shares),
-        'avg_cost_basis': str(h.avg_cost_basis),
-        'id': str(h.id),
-        'portfolio_id': str(h.portfolio_id)
-        })
-    return jsonify(result), 200
+    portfolio_summary = portfolio_service.portfolio_summary(portfolio_id)
+    return jsonify(portfolio_summary),200
 
-#no delete in holding because will be in transaction
     
 

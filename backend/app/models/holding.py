@@ -1,7 +1,7 @@
 from app.extensions import db
 import uuid
 from sqlalchemy.dialects.postgresql import UUID
-from app.types import GUID
+from app.services.types import GUID
 
 class Holding(db.Model):
     __tablename__ = 'holding'

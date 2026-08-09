@@ -13,10 +13,10 @@ class portfolio_service:
         holdings = db.session.query(Holding).filter_by(portfolio_id=portfolio_id).all()
         if not holdings:
             result = []
-            portfolio_summary = {'total_value':0,
-                                 'total_cost_basis':0,
-                                 'total_gain_loss':0,
-                                 'total_gain_loss_pct':0}
+            portfolio_summary = {'total_value':str(0),
+                                 'total_cost_basis':str(0),
+                                 'total_gain_loss':str(0),
+                                 'total_gain_loss_pct':str(0)}
             return {'holdings_summary':result,'portfolio_summary':portfolio_summary}
         result = []
         for h in holdings:
@@ -48,9 +48,9 @@ class portfolio_service:
                   item['allocation_pct'] = Decimal(item['value'])/total_value if total_value else 0
 
         portfolio_summary = {
-             'total_value': total_value,
-             'total_cost_basis': total_cost_basis,
-             'total_gain_loss': total_gain_loss,
-             'total_gain_loss_pct': total_gain_loss_pct
+             'total_value': str(total_value),
+             'total_cost_basis': str(total_cost_basis),
+             'total_gain_loss': str(total_gain_loss),
+             'total_gain_loss_pct': str(total_gain_loss_pct)
             }
         return {'holdings_summary':result,'portfolio_summary':portfolio_summary}

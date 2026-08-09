@@ -35,7 +35,7 @@ def get_avg_cost_basis(price,shares,portfolio_id,symbol,transaction_type):
             new_transaction_total = price * shares
             holding_total = total_amount + new_transaction_total
             total_holding_shares = shares_count + shares
-            avg_cost_basis = holding_total/total_holding_shares
+            avg_cost_basis = holding_total/total_holding_shares if total_holding_shares else 0
             return avg_cost_basis
         if transaction_type == TransactionType.SELL:
             avg_cost_basis = total_amount/shares_count
@@ -77,6 +77,8 @@ def insert(portfolio_id):
             holding.shares = holding.shares + shares
         if transaction.transaction_type == TransactionType.SELL:
             holding.shares = holding.shares - shares
+            if holding.shares < 0:
+                return jsonify({'message':'shares amount cannot be set below zero'}), 400
         db.session.add(transaction)
         db.session.commit()
         return jsonify({'message':'transaction added','holding id': str(holding_id)}), 201

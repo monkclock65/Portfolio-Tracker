@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy.dialects.postgresql import UUID
 import enum
 from datetime import datetime, timezone
-from app.types import GUID
+from app.services.types import GUID
 
 class TransactionType(enum.Enum):
     BUY = 'BUY'
