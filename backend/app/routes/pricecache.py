@@ -1,7 +1,7 @@
 from decimal import Decimal
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required
-from app.pricing import PriceService
+from app.services.pricing import PriceService
 
 pricecache_bp = Blueprint('pricecache', __name__, url_prefix='/pricecache')
 
