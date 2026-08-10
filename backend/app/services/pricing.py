@@ -60,19 +60,18 @@ class PriceService():
     def read_price(symbol):
         pricecache = db.session.query(PriceCache).filter_by(symbol=symbol).first()
         if pricecache:
-            is_current = datetime.now(timezone.utc) - pricecache.fetched_at < timedelta(minutes=15)
+            fetched_at = pricecache.fetched_at
+            if fetched_at is not None and fetched_at.tzinfo is None:
+                fetched_at = fetched_at.replace(tzinfo=timezone.utc)
+            is_current = datetime.now(timezone.utc) - fetched_at < timedelta(minutes=15)
             if is_current:
                 return pricecache.price
-            else:
-                try:
-                     price = PriceService.add_price(symbol)
-                     if price is None:
-                         return pricecache.price
-                     return price
-                except Exception:
+            try:
+                price = PriceService.add_price(symbol)
+                if price is None:
                     return pricecache.price
-        else:
-            return None
-
-        
+                return price
+            except Exception:
+                return pricecache.price
+        return PriceService.add_price(symbol)
 
