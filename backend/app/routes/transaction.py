@@ -96,4 +96,29 @@ def insert(portfolio_id):
         return jsonify({'message':'transaction added','holding id': str(holding_id)}), 201
     
     
-       
+@transaction_bp.route('/read_all_transactions/<uuid:portfolio_id>', methods=['GET'])      
+@jwt_required()
+def read_all(portfolio_id):
+    portfolio = get_owned_portfolio(portfolio_id)
+    if portfolio is None:
+        return jsonify ({'message': 'portfolio not found'}), 404
+    transaction_list = []
+    holdings = db.session.query(Holding).filter_by(portfolio_id=portfolio_id).all()
+    for holding in holdings:
+        symbol = holding.symbol
+        holding_id=holding.id
+        transactions = db.session.query(Transaction).filter_by(holding_id=holding_id).order_by(Transaction.transacted_at).all()
+        for transaction in transactions:
+            transaction_type = transaction.transaction_type.value
+            shares = transaction.shares
+            price = transaction.price
+            id = transaction.id
+            transaction_dict = {
+                'symbol': symbol,
+                'type'  : transaction_type,
+                'shares': str(shares),
+                'price': str(price),
+                'id':    str(id)
+                }
+            transaction_list.append(transaction_dict)
+    return jsonify({'transactions': transaction_list}), 200
