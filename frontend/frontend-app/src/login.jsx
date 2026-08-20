@@ -1,11 +1,11 @@
 import {
   useMutation
 } from '@tanstack/react-query'
-import { api } from './api'
+import  api from './api'
 import {useState} from 'react'
 
  export default function Login() {
-    const [error,setError] = useState(0)
+    const [error,setError] = useState('')
     const loginMutation = useMutation({
 
         mutationFn: (loginData) => api.post('/auth/login', loginData),
@@ -34,6 +34,7 @@ import {useState} from 'react'
             </form>
             {loginMutation.isError ? (loginMutation.error.message):null}
             <div>{error}</div>
+            <div></div>
         </div>
     )
 
