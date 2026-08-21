@@ -3,6 +3,7 @@ import {
 } from '@tanstack/react-query'
 import  api from './api'
 import {useState} from 'react'
+import {useNavigate} from 'react-router-dom'
 
  export default function Login() {
     const [error,setError] = useState('')
@@ -15,6 +16,7 @@ import {useState} from 'react'
         })
     
     function handleLogin(formData) {
+    const navigate = useNavigate()
     const username = formData.get('username')
     const password = formData.get('password')
     if (!password || !username) {
@@ -23,14 +25,16 @@ import {useState} from 'react'
         }
         setError('')
     loginMutation.mutate({username, password});
+    navigate('/view-portfolio')
+
     }
 
     return (
         <div>
-                <form action={handleLogin}>
+                <form action>
                 <input name='username'/>
                 <input name='password'/>
-                <button type="submit">{loginMutation.isPending ? <div>logging in...</div> : null}login</button>
+                <button type="submit">{loginMutation.isPending ? <div Onclick={handleLogin}>logging in...</div> : null}login</button>
             </form>
             {loginMutation.isError ? (loginMutation.error.message):null}
             <div>{error}</div>
