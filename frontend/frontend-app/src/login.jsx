@@ -6,17 +6,22 @@ import {useState} from 'react'
 import {useNavigate} from 'react-router-dom'
 
  export default function Login() {
+    const navigate = useNavigate()
     const [error,setError] = useState('')
     const loginMutation = useMutation({
 
         mutationFn: (loginData) => api.post('/auth/login', loginData),
         
-        onSuccess: (response) => { localStorage.setItem('access_token', response.data.access_token) }
+        onSuccess: (response) => {
+            localStorage.setItem('access_token', response.data.access_token)
+            navigate('/portfolio')
+        }
     
         })
     
-    function handleLogin(formData) {
-    const navigate = useNavigate()
+    function handleLogin(event) {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
     const username = formData.get('username')
     const password = formData.get('password')
     if (!password || !username) {
@@ -25,16 +30,14 @@ import {useNavigate} from 'react-router-dom'
         }
         setError('')
     loginMutation.mutate({username, password});
-    navigate('/view-portfolio')
-
     }
 
     return (
         <div>
-                <form action>
+                <form onSubmit={handleLogin}>
                 <input name='username'/>
                 <input name='password'/>
-                <button type="submit">{loginMutation.isPending ? <div Onclick={handleLogin}>logging in...</div> : null}login</button>
+                <button type="submit">{loginMutation.isPending ? 'logging in...' : 'login'}</button>
             </form>
             {loginMutation.isError ? (loginMutation.error.message):null}
             <div>{error}</div>
@@ -43,10 +46,4 @@ import {useNavigate} from 'react-router-dom'
     )
 
 }
-
-    
-    
-
-
-
 

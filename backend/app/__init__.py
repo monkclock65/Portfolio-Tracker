@@ -24,7 +24,18 @@ def create_app(test_config=None):
     migrate.init_app(app, db)
     jwt.init_app(app)
     bcrypt.init_app(app)
-    cors.init_app(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+    cors.init_app(app, resources={
+        r"/*": {
+            "origins": [
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "http://localhost:5174",
+                "http://127.0.0.1:5174",
+            ],
+            "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+        }
+    })
 
     @jwt.token_in_blocklist_loader
     def check_if_token_blocklisted(jwt_header, jwt_payload):
