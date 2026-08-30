@@ -196,7 +196,6 @@ class TestTransactionGuards:
 
 class TestKnownGaps:
 
-    @pytest.mark.xfail(reason="route returns no body/201 yet; add `return jsonify(...), 201`")
     def test_success_returns_201_with_body(self, client, auth_headers, portfolio_id):
         resp = post_txn(client, auth_headers, portfolio_id, 'AAPL', 'BUY', 10, 10)
         assert resp.status_code == 201
@@ -204,7 +203,6 @@ class TestKnownGaps:
         assert body is not None
         assert 'symbol' in body or 'id' in body
 
-    @pytest.mark.xfail(reason="no oversell guard yet; SELL can drive shares negative")
     def test_oversell_rejected(self, client, auth_headers, portfolio_id):
         post_txn(client, auth_headers, portfolio_id, 'AAPL', 'BUY', 5, 10)
         resp = post_txn(client, auth_headers, portfolio_id, 'AAPL', 'SELL', 999, 10)

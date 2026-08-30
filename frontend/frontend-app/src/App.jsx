@@ -1,6 +1,7 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Link, Navigate, Route, Routes } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { AppBar, Box, Button, Toolbar, Typography } from '@mui/material';
+import api from './api';
 import Login from './login';
 import Register from './register';
 import ViewPortfolio from './view-portfolio';
@@ -16,8 +17,9 @@ function NavBar({ isAuthenticated, onLogout }) {
     <AppBar position="static" color="primary" sx={{ mb: 2 }}>
       <Toolbar>
         <Button
+          component={Link}
+          to="/welcome"
           color="inherit"
-          href="/welcome"
           sx={{ flexGrow: 1, justifyContent: 'flex-start', p: 0, minWidth: 0, textTransform: 'none' }}
         >
           <Typography variant="h6" component="span" sx={{ fontWeight: 700 }}>
@@ -27,14 +29,14 @@ function NavBar({ isAuthenticated, onLogout }) {
 
         {isAuthenticated ? (
           <>
-            <Button color="inherit" href="/create-portfolio">Create Portfolio</Button>
-            <Button color="inherit" href="/portfolio">Portfolio</Button>
+            <Button component={Link} to="/create-portfolio" color="inherit">Create Portfolio</Button>
+            <Button component={Link} to="/portfolio" color="inherit">Portfolio</Button>
             <Button color="inherit" onClick={onLogout}>Logout</Button>
           </>
         ) : (
           <>
-            <Button color="inherit" href="/register">Register</Button>
-            <Button color="inherit" href="/login">Login</Button>
+            <Button component={Link} to="/register" color="inherit">Register</Button>
+            <Button component={Link} to="/login" color="inherit">Login</Button>
           </>
         )}
       </Toolbar>
@@ -69,8 +71,16 @@ function App() {
     window.dispatchEvent(new Event('auth-change'));
   };
 
-  const handleLogout = () => {
-    updateToken(null);
+  const handleLogout = async () => {
+    try {
+      if (token) {
+        await api.delete('/auth/logout');
+      }
+    } catch (error) {
+      console.warn('Logout request failed, clearing local session anyway:', error);
+    } finally {
+      updateToken(null);
+    }
   };
 
   return (
