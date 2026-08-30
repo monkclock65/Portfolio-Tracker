@@ -5,6 +5,7 @@ from flask import Blueprint,request, jsonify
 from app.extensions import db
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from decimal import Decimal
+from app.services.pricing import PriceService
 
 transaction_bp = Blueprint('transaction',__name__,url_prefix='/transaction')
 
@@ -63,7 +64,22 @@ def insert(portfolio_id):
     except ValueError:
         return jsonify({'message': 'invalid transaction_type'}), 400
     shares = data.get('shares')
-    price = data.get('price')
+    
+    # For SELL transactions, get the current market price
+    if transaction_type == TransactionType.SELL:
+        try:
+            price_data = PriceService.get_price(symbol)
+            if price_data is None:
+                return jsonify({'message': f'could not fetch current price for {symbol}'}), 400
+            price = Decimal(str(price_data['current_price']))
+        except Exception as e:
+            return jsonify({'message': f'error fetching price: {str(e)}'}), 500
+    else:
+        # For BUY transactions, use the user-provided price
+        price = data.get('price')
+        if price is None:
+            return jsonify({'message': 'price is required for BUY transactions'}), 400
+    
     price = Decimal(str(price))
     shares = Decimal(str(shares))
 
@@ -79,6 +95,7 @@ def insert(portfolio_id):
             holding.shares = holding.shares - shares
             if holding.shares < 0:
                 return jsonify({'message':'shares amount cannot be set below zero'}), 400
+        db.session.add(holding)
         db.session.add(transaction)
         db.session.commit()
         return jsonify({'message':'transaction added','holding id': str(holding_id)}), 201

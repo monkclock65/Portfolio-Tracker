@@ -66,8 +66,6 @@ def read(portfolio_id):
 def read_all():
     identity = get_jwt_identity()
     portfolios = db.session.query(Portfolio).filter_by(user_id=identity).all()
-    if not portfolios:
-        return jsonify({'message':'no portfolios found'}), 404
     result = []
     for p in portfolios:
         result.append({
