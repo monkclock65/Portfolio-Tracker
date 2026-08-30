@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://portfolio-tracker-actk.onrender.com/',
+  baseURL: 'https://portfolio-tracker-actk.onrender.com',
 });
 
 api.interceptors.request.use((config) => {
