@@ -9,7 +9,9 @@ import CreatePortfolio from './create-portfolio';
 import Welcome from './welcome';
 
 function getStoredToken() {
-  return localStorage.getItem('access_token');
+  const t = localStorage.getItem('access_token');
+  if (t === null || t === 'null' || t === 'undefined') return null;
+  return t;
 }
 
 function NavBar({ isAuthenticated, onLogout }) {
@@ -46,6 +48,7 @@ function NavBar({ isAuthenticated, onLogout }) {
 
 function App() {
   const [token, setToken] = useState(() => getStoredToken());
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const syncAuthState = () => setToken(getStoredToken());
@@ -58,7 +61,46 @@ function App() {
     };
   }, []);
 
+  // Silent refresh on startup using api.post (sends to configured baseURL)
+  useEffect(() => {
+    let mounted = true;
+    const tryRefresh = async () => {
+      const refresh = localStorage.getItem('refresh_token');
+      if (!refresh || refresh === 'null' || refresh === 'undefined') {
+        if (mounted) setReady(true);
+        return;
+      }
+
+      try {
+        const resp = await api.post('/auth/refresh', {}, {
+          headers: { Authorization: `Bearer ${refresh}` },
+        });
+        const newAccess = resp.data?.access_token;
+        if (newAccess) {
+          localStorage.setItem('access_token', newAccess);
+          if (mounted) setToken(newAccess);
+          window.dispatchEvent(new Event('auth-change'));
+        } else {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          if (mounted) setToken(null);
+          window.dispatchEvent(new Event('auth-change'));
+        }
+      } catch (e) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        if (mounted) setToken(null);
+        window.dispatchEvent(new Event('auth-change'));
+      } finally {
+        if (mounted) setReady(true);
+      }
+    };
+    tryRefresh();
+    return () => { mounted = false; };
+  }, []);
+
   const isAuthenticated = Boolean(token);
+  if (!ready) return null;
 
   const updateToken = (nextToken) => {
     if (nextToken) {
