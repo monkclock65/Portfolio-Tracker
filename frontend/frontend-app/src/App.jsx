@@ -65,6 +65,7 @@ function App() {
       localStorage.setItem('access_token', nextToken);
     } else {
       localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
     }
 
     setToken(nextToken || null);

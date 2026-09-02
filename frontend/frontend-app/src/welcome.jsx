@@ -14,10 +14,14 @@ export default function Welcome({ onLogin }) {
         try {
             const response = await api.post('/auth/demo-login', DEMO_USER);
             const token = response.data?.access_token;
+            const refresh = response.data?.refresh_token;
 
             if (!token) {
                 return;
             }
+
+            localStorage.setItem('access_token', token);
+            if (refresh) localStorage.setItem('refresh_token', refresh);
 
             if (typeof onLogin === 'function') {
                 onLogin(token);

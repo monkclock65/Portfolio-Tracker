@@ -11,7 +11,13 @@ export default function Login({ onLogin }) {
         mutationFn: (loginData) => api.post('/auth/login', loginData),
         onSuccess: (response) => {
             const token = response.data.access_token
+            const refresh = response.data.refresh_token
+            if (!token) {
+                setError('Login failed: missing access token')
+                return
+            }
             localStorage.setItem('access_token', token)
+            if (refresh) localStorage.setItem('refresh_token', refresh)
             if (typeof onLogin === 'function') onLogin(token)
             navigate('/portfolio')
         }
