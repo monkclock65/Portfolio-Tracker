@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, send_from_directory
 from app.extensions import db, migrate, jwt, bcrypt, cors
 from app.models.token_blocklist import TokenBlocklist
 from app.routes.auth import auth_bp
@@ -45,4 +45,16 @@ def create_app(test_config=None):
 
     with app.app_context():
         from app import routes, models
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve_frontend(path):
+        # path to frontend build output
+        dist_dir = os.path.abspath(os.path.join(app.root_path, '..', '..', 'frontend', 'frontend-app', 'dist'))
+        requested = os.path.join(dist_dir, path)
+        if path != '' and os.path.exists(requested):
+            return send_from_directory(dist_dir, path)
+        index_path = os.path.join(dist_dir, 'index.html')
+        if os.path.exists(index_path):
+            return send_from_directory(dist_dir, 'index.html')
+        return 'Frontend not built', 404
     return app
